@@ -7,7 +7,6 @@ import com.ishan.parkinglot.domain.VehicleType;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
-import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,15 +20,16 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
 
   @Override
   public void init(String parkingLotId) {
-    Object parkingChart = this.redisTemplate.opsForValue().get(getParkingChartKey(parkingLotId));
-    if (Objects.isNull(parkingChart)) {
+    Boolean parkingMap
+        = this.redisTemplate.opsForValue().getOperations().hasKey(getParkingMapKey(parkingLotId));
+    if (Objects.isNull(parkingMap) || !parkingMap) {
       // Get all parking spots for this parking lot and create a redis bitmap
-      int slots = 10; // todo
+      int slots = 20; // todo
 
       this.redisTemplate
           .opsForValue()
           .bitField(
-              getParkingChartKey(parkingLotId),
+              getParkingMapKey(parkingLotId),
               BitFieldSubCommands.create()
               .set(BitFieldSubCommands.BitFieldType.unsigned(slots)).valueAt(0).to((long) (Math.pow(2, slots) - 1))
           );
@@ -46,19 +46,20 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
       VehicleType vehicleType, String spotId) throws BookingException {
 
     ParkingTicket ticket = new ParkingTicket();
-    String ticketId = UUID.randomUUID().toString();
+    String ticketId = ParkingTicket.generateTicketId(parkingLotId);
     LocalDateTime entryTime = LocalDateTime.now();
     ticket.setTicketId(ticketId);
+    ticket.setSpotId(spotId);
     ticket.setEntryTime(entryTime);
     ticket.setVehicleNo(vehicleNo);
     ticket.setVehicleType(vehicleType);
 
     boolean booked = this.redisTemplate
         .opsForValue()
-        .setBit(getParkingChartKey(parkingLotId), Long.parseLong(spotId), false);
+        .setBit(getParkingMapKey(parkingLotId), Long.parseLong(spotId), false);
 
     if (! booked) {
-      throw new BookingException();
+      throw new BookingException("Slot already booked");
     }
 
     this.redisTemplate
@@ -66,6 +67,7 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
         .putAll(getParkingTicketKey(ticketId),
             Map.of(
                 "ticketNo", ticketId,
+                "spotId", spotId,
                 "entryTime", entryTime, //todo - Format
                 "vehicleNo", vehicleNo,
                 "vehicleType", vehicleType.name()
@@ -74,7 +76,7 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
     return ticket;
   }
 
-  private String getParkingChartKey(String parkingLotId) {
+  private String getParkingMapKey(String parkingLotId) {
     return "parkinglot" + ":" + parkingLotId;
   }
 
