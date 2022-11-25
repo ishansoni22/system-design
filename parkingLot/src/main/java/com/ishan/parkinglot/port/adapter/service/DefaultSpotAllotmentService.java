@@ -4,6 +4,7 @@ import com.ishan.parkinglot.domain.BookingException;
 import com.ishan.parkinglot.domain.ParkingTicket;
 import com.ishan.parkinglot.domain.SpotAllotmentService;
 import com.ishan.parkinglot.domain.VehicleType;
+import com.ishan.parkinglot.port.adapter.db.SpotRepository;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
@@ -18,20 +19,24 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
   @Autowired
   private RedisTemplate<String, Object> redisTemplate;
 
+  @Autowired
+  private SpotRepository spotRepository;
+
   @Override
   public void init(String parkingLotId) {
     Boolean parkingMap
         = this.redisTemplate.opsForValue().getOperations().hasKey(getParkingMapKey(parkingLotId));
     if (Objects.isNull(parkingMap) || !parkingMap) {
       // Get all parking spots for this parking lot and create a redis bitmap
-      int slots = 20; // todo
+      int spots = this.spotRepository
+          .countByParkingLotId(parkingLotId);
 
       this.redisTemplate
           .opsForValue()
           .bitField(
               getParkingMapKey(parkingLotId),
               BitFieldSubCommands.create()
-              .set(BitFieldSubCommands.BitFieldType.unsigned(slots)).valueAt(0).to((long) (Math.pow(2, slots) - 1))
+              .set(BitFieldSubCommands.BitFieldType.unsigned(spots)).valueAt(0).to((long) (Math.pow(2, spots) - 1))
           );
     }
   }

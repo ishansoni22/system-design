@@ -6,10 +6,10 @@ public interface SpotPickerService {
 
   void init(String parkingLotId, String terminalId);
 
-  String pickSpot(String vehicleNo, VehicleType vehicleType);
+  String pickSpot(String parkingLotId, String terminalId, String vehicleNo, VehicleType vehicleType);
 
-  void onSpotTaken(String spotId);
+  void onSpotTaken(String parkingLotId, String terminalId, String spotId);
 
-  void onSpotReleased(String spotId);
+  void onSpotReleased(String parkingLotId, String terminalId, String spotId);
 
 }

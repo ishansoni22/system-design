@@ -2,6 +2,7 @@ package com.ishan.parkinglot.domain;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.Data;
 
@@ -16,10 +17,11 @@ public class ParkingTicket {
 
   public static String generateTicketId(String parkingLotId) {
     LocalDate today = LocalDate.now();
-    return today.getDayOfMonth() + today.getMonthValue() + today.getYear()
+    return today.format(DateTimeFormatter.ISO_DATE)
         + "-"
         + parkingLotId
-        + "-" + UUID.randomUUID().toString().substring(0, 5);
+        + "-"
+        + UUID.randomUUID().toString().substring(0, 5);
   }
 
   @Override
@@ -27,10 +29,11 @@ public class ParkingTicket {
     return
         '\n' +
             "==================================================" + '\n' +
-            "Ticket Id=" + ticketId + '\n' +
-            "Entry Time=" + entryTime + '\n' +
-            "Vehicle Number=" + vehicleNo + '\n' +
-            "Vehicle Type=" + vehicleType + '\n' +
+            "Ticket Id=" + this.ticketId + '\n' +
+            "Spot Id=" + this.spotId + '\n' +
+            "Entry Time=" + this.entryTime + '\n' +
+            "Vehicle Number=" + this.vehicleNo + '\n' +
+            "Vehicle Type=" + this.vehicleType + '\n' +
             "==================================================" +
             '\n';
   }

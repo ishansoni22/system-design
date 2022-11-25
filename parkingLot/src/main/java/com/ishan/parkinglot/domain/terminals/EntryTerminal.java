@@ -19,15 +19,15 @@ public class EntryTerminal {
   }
 
   public String pickSpot(String vehicleNo, VehicleType vehicleType) {
-    return this.spotPickerService.pickSpot(vehicleNo, vehicleType);
+    return this.spotPickerService.pickSpot(this.parkingLotId, this.terminalId, vehicleNo, vehicleType);
   }
 
   public void onSpotTaken(String spotId) {
-    this.spotPickerService.onSpotTaken(spotId);
+    this.spotPickerService.onSpotTaken(this.parkingLotId, this.terminalId, spotId);
   }
 
   public void onSpotReleased(String spotId) {
-    this.spotPickerService.onSpotReleased(spotId);
+    this.spotPickerService.onSpotReleased(this.parkingLotId, this.terminalId, spotId);
   }
 
 }

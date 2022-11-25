@@ -1,28 +1,27 @@
 package com.ishan.parkinglot.domain;
 
-import com.ishan.parkinglot.domain.terminals.EntryTerminal;
-import java.util.List;
+import com.ishan.parkinglot.domain.terminals.SpotSyncService;
 
 public class ParkingLot {
 
   private String id;
   private SpotAllotmentService spotAllotmentService;
-  private List<EntryTerminal> entryTerminals;
 
-  public ParkingLot(String id, SpotAllotmentService spotAllotmentService,
-      List<EntryTerminal> entryTerminals) {
+  public ParkingLot(String id, SpotAllotmentService spotAllotmentService) {
     this.id = id;
     this.spotAllotmentService = spotAllotmentService;
-    this.entryTerminals = entryTerminals;
     this.spotAllotmentService.init(this.id);
   }
 
-  public ParkingTicket bookSpot(String vehicleNo, VehicleType vehicleType, String spotId)
+  public ParkingTicket bookSpot(
+      SpotSyncService spotSyncService,
+      String vehicleNo, VehicleType vehicleType,
+      String entryTerminalId, String spotId)
       throws BookingException {
-    ParkingTicket parkingTicket = this.spotAllotmentService
+    ParkingTicket ticket =  this.spotAllotmentService
         .bookSpot(this.id, vehicleNo, vehicleType, spotId);
-    this.entryTerminals.forEach(entryTerminal -> entryTerminal.onSpotTaken(spotId));
-    return parkingTicket;
+    spotSyncService.publishSpotBooked(new SpotBooked(this.id, entryTerminalId, spotId));
+    return ticket;
   }
 
 }
