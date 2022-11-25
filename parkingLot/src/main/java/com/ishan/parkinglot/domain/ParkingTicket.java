@@ -1,7 +1,6 @@
 package com.ishan.parkinglot.domain;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 import lombok.Data;
@@ -10,18 +9,38 @@ import lombok.Data;
 public class ParkingTicket {
 
   private String ticketId;
+  private String parkingLotId;
+  private String entryTerminalId;
   private String spotId;
-  private LocalDateTime entryTime;
+  private String entryTime;
   private String vehicleNo;
   private VehicleType vehicleType;
 
-  public static String generateTicketId(String parkingLotId) {
-    LocalDate today = LocalDate.now();
-    return today.format(DateTimeFormatter.ISO_DATE)
-        + "-"
+  public static ParkingTicket generate(
+      String parkingLotId,
+      String entryTerminalId,
+      String spotId,
+      String vehicleNo, VehicleType vehicleType) {
+    ParkingTicket ticket = new ParkingTicket();
+
+    String today = LocalDate.now().format(DateTimeFormatter.ISO_DATE);
+    String ticketId = today
+        + ":"
         + parkingLotId
-        + "-"
+        + ":"
+        + entryTerminalId
+        + ":"
         + UUID.randomUUID().toString().substring(0, 5);
+
+    ticket.setTicketId(ticketId);
+    ticket.setParkingLotId(parkingLotId);
+    ticket.setEntryTerminalId(entryTerminalId);
+    ticket.setSpotId(spotId);
+    ticket.setEntryTime(today);
+    ticket.setVehicleNo(vehicleNo);
+    ticket.setVehicleType(vehicleType);
+
+    return ticket;
   }
 
   @Override
@@ -30,6 +49,8 @@ public class ParkingTicket {
         '\n' +
             "==================================================" + '\n' +
             "Ticket Id=" + this.ticketId + '\n' +
+            "Parking Lot=" + this.parkingLotId + '\n' +
+            "Entry Terminal=" + this.entryTerminalId + '\n' +
             "Spot Id=" + this.spotId + '\n' +
             "Entry Time=" + this.entryTime + '\n' +
             "Vehicle Number=" + this.vehicleNo + '\n' +

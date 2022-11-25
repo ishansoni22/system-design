@@ -7,16 +7,18 @@ import com.ishan.parkinglot.domain.ParkingTicket;
 import com.ishan.parkinglot.domain.terminals.EntryTerminal;
 import com.ishan.parkinglot.domain.terminals.EntryTerminalRepository;
 import com.ishan.parkinglot.domain.terminals.SpotSyncService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class ParkingLotApplicationService {
 
-  /* @Autowired */
+  @Autowired
   private EntryTerminalRepository entryTerminalRepository;
 
-  /* @Autowired */
+  @Autowired
   private ParkingLotRepository parkingLotRepository;
 
   @Autowired
@@ -27,20 +29,23 @@ public class ParkingLotApplicationService {
     String entryTerminalId = spotBookingCommand.getTerminalId();
 
     EntryTerminal entryTerminal =
-        this.entryTerminalRepository.getEntryTerminal(parkingLotId).orElseThrow();
+        this.entryTerminalRepository.getEntryTerminal(entryTerminalId).orElseThrow();
 
     String pickedSpot =
         entryTerminal.pickSpot(
             spotBookingCommand.getVehicleNo(), spotBookingCommand.getVehicleType());
 
-    ParkingLot parkingLot = this.parkingLotRepository.getParkingLot(entryTerminalId).orElseThrow();
+    log.info("Spot picked by terminal {} is {}", entryTerminal.getTerminalId(), pickedSpot);
+
+    ParkingLot parkingLot = this.parkingLotRepository.getParkingLot(parkingLotId).orElseThrow();
 
     return parkingLot.bookSpot(
         this.spotSyncService,
         spotBookingCommand.getVehicleNo(),
         spotBookingCommand.getVehicleType(),
         entryTerminalId,
-        pickedSpot);
+        pickedSpot
+    );
   }
 
 }

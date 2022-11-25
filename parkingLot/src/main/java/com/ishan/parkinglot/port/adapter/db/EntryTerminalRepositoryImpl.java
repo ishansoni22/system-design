@@ -25,7 +25,12 @@ public class EntryTerminalRepositoryImpl implements EntryTerminalRepository {
 
   @Override
   public Optional<EntryTerminal> getEntryTerminal(String terminalId) {
-    return Optional.empty();
+    return this.terminalJpaRepository.findById(terminalId)
+        .map(terminal -> new EntryTerminal(
+            terminal.getParkingLotId(),
+            terminal.getId(),
+            getSpotPickerService(terminal.getPickerStrategy())
+        ));
   }
 
   @Override

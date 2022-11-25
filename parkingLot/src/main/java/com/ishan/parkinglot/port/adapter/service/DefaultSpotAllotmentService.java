@@ -5,7 +5,6 @@ import com.ishan.parkinglot.domain.ParkingTicket;
 import com.ishan.parkinglot.domain.SpotAllotmentService;
 import com.ishan.parkinglot.domain.VehicleType;
 import com.ishan.parkinglot.port.adapter.db.SpotRepository;
-import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,35 +46,36 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
   If the returned value (old value) was 1, it means the spot was booked successfully
    */
   @Override
-  public ParkingTicket bookSpot(String parkingLotId, String vehicleNo,
-      VehicleType vehicleType, String spotId) throws BookingException {
+  public ParkingTicket bookSpot(String parkingLotId, String entryTerminalId,
+      String vehicleNo, VehicleType vehicleType, String spotId) throws BookingException {
 
-    ParkingTicket ticket = new ParkingTicket();
-    String ticketId = ParkingTicket.generateTicketId(parkingLotId);
-    LocalDateTime entryTime = LocalDateTime.now();
-    ticket.setTicketId(ticketId);
-    ticket.setSpotId(spotId);
-    ticket.setEntryTime(entryTime);
-    ticket.setVehicleNo(vehicleNo);
-    ticket.setVehicleType(vehicleType);
+    ParkingTicket ticket = ParkingTicket.generate(
+        parkingLotId,
+        entryTerminalId,
+        spotId,
+        vehicleNo,
+        vehicleType
+    );
 
     boolean booked = this.redisTemplate
         .opsForValue()
         .setBit(getParkingMapKey(parkingLotId), Long.parseLong(spotId), false);
 
     if (! booked) {
-      throw new BookingException("Slot already booked");
+      throw new BookingException("Spot already booked");
     }
 
     this.redisTemplate
         .opsForHash()
-        .putAll(getParkingTicketKey(ticketId),
+        .putAll(getParkingTicketKey(ticket.getTicketId()),
             Map.of(
-                "ticketNo", ticketId,
-                "spotId", spotId,
-                "entryTime", entryTime, //todo - Format
-                "vehicleNo", vehicleNo,
-                "vehicleType", vehicleType.name()
+                "ticketId", ticket.getTicketId(),
+                "parkingLotId", ticket.getParkingLotId(),
+                "entryTerminalId", ticket.getEntryTerminalId(),
+                "spotId", ticket.getSpotId(),
+                "entryTime", ticket.getEntryTime(),
+                "vehicleNo", ticket.getVehicleNo(),
+                "vehicleType", ticket.getVehicleType().name()
             ));
 
     return ticket;

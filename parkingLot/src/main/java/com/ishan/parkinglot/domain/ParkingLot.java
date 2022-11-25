@@ -1,7 +1,9 @@
 package com.ishan.parkinglot.domain;
 
 import com.ishan.parkinglot.domain.terminals.SpotSyncService;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class ParkingLot {
 
   private String id;
@@ -19,7 +21,8 @@ public class ParkingLot {
       String entryTerminalId, String spotId)
       throws BookingException {
     ParkingTicket ticket =  this.spotAllotmentService
-        .bookSpot(this.id, vehicleNo, vehicleType, spotId);
+        .bookSpot(this.id, entryTerminalId, vehicleNo, vehicleType, spotId);
+    log.info("Spot booked {}", ticket);
     spotSyncService.publishSpotBooked(new SpotBooked(this.id, entryTerminalId, spotId));
     return ticket;
   }
