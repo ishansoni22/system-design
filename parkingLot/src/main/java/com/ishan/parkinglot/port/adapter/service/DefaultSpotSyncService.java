@@ -15,10 +15,10 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class DefaultSpotSyncService implements SpotSyncService {
 
+  public static final String SYNC_CHANNEL = "parking-events";
+
   @Autowired
   private ObjectMapper objectMapper;
-
-  public static final String SYNC_CHANNEL = "parking-events";
 
   @Autowired
   private StringRedisTemplate stringRedisTemplate;
@@ -30,8 +30,7 @@ public class DefaultSpotSyncService implements SpotSyncService {
   public void publishSpotBooked(SpotBooked spotBooked) {
     try {
       this.stringRedisTemplate.convertAndSend(
-          SYNC_CHANNEL, this.objectMapper.writeValueAsString(spotBooked)
-      );
+          SYNC_CHANNEL, this.objectMapper.writeValueAsString(spotBooked));
     } catch (Exception e) {
       log.error("Unable to send spot allocated event", e);
     }
@@ -41,21 +40,17 @@ public class DefaultSpotSyncService implements SpotSyncService {
   public void handleSpotBooked(SpotBooked spotBooked) {
     this.entryTerminalRepository
         .getAllEntryTerminalsForParkingLot(spotBooked.getParkingLotId())
-        .forEach(et -> et.onSpotTaken(spotBooked.getSpotId()));
+        .forEach(entryTerminal -> entryTerminal.onSpotTaken(spotBooked.getSpotId()));
   }
 
   @Override
-  public void publishSpotReleased(SpotReleased spotReleased) {
-
-  }
+  public void publishSpotReleased(SpotReleased spotReleased) {}
 
   @Override
-  public void handleSpotReleased(SpotReleased spotReleased) {
-
-  }
+  public void handleSpotReleased(SpotReleased spotReleased) {}
 
   public void handleMessage(String message) {
-    log.info("Incoming spot book message received {} ", message);
+    log.info("Incoming parking event message {} ", message);
     try {
       ParkingEvent parkingEvent = this.objectMapper.readValue(message, ParkingEvent.class);
       if ("SpotBooked".equals(parkingEvent.getType())) {

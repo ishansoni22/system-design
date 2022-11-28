@@ -1,6 +1,7 @@
 package com.ishan.parkinglot.application;
 
 import com.ishan.parkinglot.domain.BookingException;
+import com.ishan.parkinglot.domain.ParkingChart;
 import com.ishan.parkinglot.domain.ParkingLot;
 import com.ishan.parkinglot.domain.ParkingLotRepository;
 import com.ishan.parkinglot.domain.ParkingTicket;
@@ -44,8 +45,12 @@ public class ParkingLotApplicationService {
         spotBookingCommand.getVehicleNo(),
         spotBookingCommand.getVehicleType(),
         entryTerminalId,
-        pickedSpot
-    );
+        pickedSpot);
+  }
+
+  public ParkingChart getCurrentParkingChart(String parkingLotId) {
+    ParkingLot parkingLot = this.parkingLotRepository.getParkingLot(parkingLotId).orElseThrow();
+    return parkingLot.getCurrentParkingChart();
   }
 
 }

@@ -7,4 +7,6 @@ public interface SpotAllotmentService {
   ParkingTicket bookSpot(String parkingLotId, String entryTerminalId, String vehicleNo,
       VehicleType vehicleType, String spotId) throws BookingException;
 
+  ParkingChart getCurrentParkingChart(String parkingLotId);
+
 }

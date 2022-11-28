@@ -1,14 +1,19 @@
 package com.ishan.parkinglot.port.adapter.service;
 
 import com.ishan.parkinglot.domain.BookingException;
+import com.ishan.parkinglot.domain.ParkingChart;
+import com.ishan.parkinglot.domain.ParkingChart.SpotStatus;
 import com.ishan.parkinglot.domain.ParkingTicket;
 import com.ishan.parkinglot.domain.SpotAllotmentService;
 import com.ishan.parkinglot.domain.VehicleType;
 import com.ishan.parkinglot.port.adapter.db.SpotRepository;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.connection.BitFieldSubCommands;
+import org.springframework.data.redis.connection.BitFieldSubCommands.BitFieldType;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -23,20 +28,20 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
 
   @Override
   public void init(String parkingLotId) {
-    Boolean parkingMap
-        = this.redisTemplate.opsForValue().getOperations().hasKey(getParkingMapKey(parkingLotId));
+    Boolean parkingMap =
+        this.redisTemplate.opsForValue().getOperations().hasKey(getParkingMapKey(parkingLotId));
     if (Objects.isNull(parkingMap) || !parkingMap) {
       // Get all parking spots for this parking lot and create a redis bitmap
-      int spots = this.spotRepository
-          .countByParkingLotId(parkingLotId);
+      int spots = this.spotRepository.countByParkingLotId(parkingLotId);
 
       this.redisTemplate
           .opsForValue()
           .bitField(
               getParkingMapKey(parkingLotId),
               BitFieldSubCommands.create()
-              .set(BitFieldSubCommands.BitFieldType.unsigned(spots)).valueAt(0).to((long) (Math.pow(2, spots) - 1))
-          );
+                  .set(BitFieldType.unsigned(spots))
+                  .valueAt(0)
+                  .to((long) (Math.pow(2, spots) - 1)));
     }
   }
 
@@ -46,28 +51,29 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
   If the returned value (old value) was 1, it means the spot was booked successfully
    */
   @Override
-  public ParkingTicket bookSpot(String parkingLotId, String entryTerminalId,
-      String vehicleNo, VehicleType vehicleType, String spotId) throws BookingException {
+  public ParkingTicket bookSpot(
+      String parkingLotId,
+      String entryTerminalId,
+      String vehicleNo,
+      VehicleType vehicleType,
+      String spotId)
+      throws BookingException {
+    ParkingTicket ticket =
+        ParkingTicket.generate(parkingLotId, entryTerminalId, spotId, vehicleNo, vehicleType);
 
-    ParkingTicket ticket = ParkingTicket.generate(
-        parkingLotId,
-        entryTerminalId,
-        spotId,
-        vehicleNo,
-        vehicleType
-    );
+    boolean booked =
+        this.redisTemplate
+            .opsForValue()
+            .setBit(getParkingMapKey(parkingLotId), Long.parseLong(spotId), false);
 
-    boolean booked = this.redisTemplate
-        .opsForValue()
-        .setBit(getParkingMapKey(parkingLotId), Long.parseLong(spotId), false);
-
-    if (! booked) {
+    if (!booked) {
       throw new BookingException("Spot already booked");
     }
 
     this.redisTemplate
         .opsForHash()
-        .putAll(getParkingTicketKey(ticket.getTicketId()),
+        .putAll(
+            getParkingTicketKey(ticket.getTicketId()),
             Map.of(
                 "ticketId", ticket.getTicketId(),
                 "parkingLotId", ticket.getParkingLotId(),
@@ -75,10 +81,26 @@ public class DefaultSpotAllotmentService implements SpotAllotmentService {
                 "spotId", ticket.getSpotId(),
                 "entryTime", ticket.getEntryTime(),
                 "vehicleNo", ticket.getVehicleNo(),
-                "vehicleType", ticket.getVehicleType().name()
-            ));
+                "vehicleType", ticket.getVehicleType().name()));
 
     return ticket;
+  }
+
+  @Override
+  public ParkingChart getCurrentParkingChart(String parkingLotId) {
+    int noOfSpots = this.spotRepository.countByParkingLotId(parkingLotId);
+    ParkingChart chart = new ParkingChart();
+    chart.setParkingId(parkingLotId);
+    List<SpotStatus> spots = new ArrayList<>();
+    for (int i = 0; i < noOfSpots; i++) {
+      SpotStatus spotStatus = new SpotStatus();
+      spotStatus.setSpotId(String.valueOf(i));
+      Boolean empty = this.redisTemplate.opsForValue().getBit(getParkingMapKey(parkingLotId), i);
+      spotStatus.setEmpty(empty);
+      spots.add(spotStatus);
+    }
+    chart.setSpots(spots);
+    return chart;
   }
 
   private String getParkingMapKey(String parkingLotId) {

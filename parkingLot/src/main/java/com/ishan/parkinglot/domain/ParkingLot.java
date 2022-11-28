@@ -17,14 +17,21 @@ public class ParkingLot {
 
   public ParkingTicket bookSpot(
       SpotSyncService spotSyncService,
-      String vehicleNo, VehicleType vehicleType,
-      String entryTerminalId, String spotId)
+      String vehicleNo,
+      VehicleType vehicleType,
+      String entryTerminalId,
+      String spotId)
       throws BookingException {
-    ParkingTicket ticket =  this.spotAllotmentService
-        .bookSpot(this.id, entryTerminalId, vehicleNo, vehicleType, spotId);
+    ParkingTicket ticket =
+        this.spotAllotmentService.bookSpot(
+            this.id, entryTerminalId, vehicleNo, vehicleType, spotId);
     log.info("Spot booked {}", ticket);
     spotSyncService.publishSpotBooked(new SpotBooked(this.id, entryTerminalId, spotId));
     return ticket;
+  }
+
+  public ParkingChart getCurrentParkingChart() {
+    return this.spotAllotmentService.getCurrentParkingChart(this.id);
   }
 
 }

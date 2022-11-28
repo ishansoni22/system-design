@@ -10,8 +10,8 @@ public class EntryTerminal {
   private String terminalId;
   private SpotPickerService spotPickerService;
 
-  public EntryTerminal(String parkingLotId, String terminalId,
-      SpotPickerService spotPickerService) {
+  public EntryTerminal(
+      String parkingLotId, String terminalId, SpotPickerService spotPickerService) {
     this.parkingLotId = parkingLotId;
     this.terminalId = terminalId;
     this.spotPickerService = spotPickerService;
@@ -19,7 +19,8 @@ public class EntryTerminal {
   }
 
   public String pickSpot(String vehicleNo, VehicleType vehicleType) {
-    return this.spotPickerService.pickSpot(this.parkingLotId, this.terminalId, vehicleNo, vehicleType);
+    return this.spotPickerService.pickSpot(
+        this.parkingLotId, this.terminalId, vehicleNo, vehicleType);
   }
 
   public void onSpotTaken(String spotId) {

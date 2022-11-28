@@ -19,7 +19,7 @@ public class ParkingLotRepositoryImpl implements ParkingLotRepository {
   @Override
   public Optional<ParkingLot> getParkingLot(String parkingLotId) {
     return this.parkingLotJpaRepository.findById(parkingLotId)
-        .map(pl -> new ParkingLot(pl.getId(), this.defaultSpotAllotmentService));
+        .map(parkingLot -> new ParkingLot(parkingLot.getId(), this.defaultSpotAllotmentService));
   }
 
 }
