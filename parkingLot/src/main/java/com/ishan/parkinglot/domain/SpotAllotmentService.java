@@ -4,7 +4,9 @@ public interface SpotAllotmentService {
 
   void init(String parkingLotId);
 
-  ParkingTicket bookSpot(String parkingLotId, String vehicleNo,
+  ParkingTicket bookSpot(String parkingLotId, String entryTerminalId, String vehicleNo,
       VehicleType vehicleType, String spotId) throws BookingException;
+
+  ParkingChart getCurrentParkingChart(String parkingLotId);
 
 }
