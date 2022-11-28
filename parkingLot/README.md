@@ -1,15 +1,15 @@
 # Parking Lot
 
-#### Concepts
+## Concepts
 
-## Entry Terminal and SpotPickerService
+#### Entry Terminal and SpotPickerService
 
 The Entry terminal 'Has A' *SpotPickerService*. When a vehicle arrives at an entry terminal, it delegates requests to pick a spot to this service. 
 The idea is to support different spot picking strategies. The *NearestSpotPickerService* uses a Redis Sorted Set 
 (i.e a min heap for each terminal - based on spot distances from a terminal) to pick spots near to the entry terminal.
 The *RandomSpotPickerService* (to do) will use a Redis Set to pick spots randomly.
 
-## Parking Lot and SpotAllotmentService
+#### Parking Lot and SpotAllotmentService
 
 The Parking lot 'Has A' *SpotAllotmentService*. It delegates requests to book a spot to this service.
 The SpotAllotmentService uses a Redis Bitmap to allot spots. It creates a Redis bitmap = # of spots in the parking lot. 
@@ -19,13 +19,13 @@ It the spot is already taken, an exception is thrown. This ensures high consiste
 Finally, the parking ticket is saved in a Redis Hash and the ticket is returned. The Parking lot also creates a SpotBooked event and pushes 
 that to a *SpotSyncService*.
 
-## SpotSyncService
+#### SpotSyncService
 
 The *SpotSyncService* is used to sync spot details across terminals, since each terminal has it's own data structure (or parking chart) that 
 it uses to pick spots. When a spot is booked, a SpotBooked event is sent to a Redis Channel. The SpotSyncService listens to this channel and
 delegates the spot updates to the SpotPickerService. The SpotPickerService can then remove this spot from it's parking chart.
 
-#### Spot Booking Flow
+## Spot Booking Flow
 
 ![Spot Booking Flow](parking-lot.png "Spot Booking Flow")
 
